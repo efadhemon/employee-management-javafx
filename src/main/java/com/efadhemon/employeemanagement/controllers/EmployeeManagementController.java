@@ -1,4 +1,4 @@
-package com.efadhemon.employeemanagement;
+package com.efadhemon.employeemanagement.controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
