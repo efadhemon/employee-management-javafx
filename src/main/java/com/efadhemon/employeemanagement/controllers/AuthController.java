@@ -1,9 +1,16 @@
 package com.efadhemon.employeemanagement.controllers;
 
+import com.efadhemon.employeemanagement.App;
 import com.efadhemon.employeemanagement.managers.AuthManager;
+import com.efadhemon.employeemanagement.models.User;
+import com.efadhemon.employeemanagement.utils.Functions;
+import com.efadhemon.employeemanagement.utils.Session;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 
 public class AuthController {
 
@@ -11,7 +18,7 @@ public class AuthController {
     private TextField usernameField;
 
     @FXML
-    private TextField passwordField;
+    private PasswordField passwordField;
 
     @FXML
     protected void handleLogin() {
@@ -24,20 +31,23 @@ public class AuthController {
         boolean isAuthenticated = authManager.login(username, password);
 
         if (isAuthenticated) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Success");
-            alert.setHeaderText(null);
-            alert.setContentText("Login Successful");
-            alert.showAndWait();
-        }else {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText(null);
-            alert.setContentText("Invalid username or password");
-            alert.showAndWait();
+            Session.isAuthenticated = true;
+            Session.currentUser = new User(username);
+         try {
+             Stage stage = (Stage) usernameField.getScene().getWindow();
+             FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("main.fxml"));
+             Scene scene = new Scene(fxmlLoader.load(), 586, 586);
+             stage.setScene(scene);
+         }catch (Exception e){
+             e.printStackTrace();
+             Functions.showError("Error", e.getMessage());
+         }
+        } else {
+            Functions.showError("Login Filed!", "Wrong username or password");
         }
 
     }
+
 
 
 }
