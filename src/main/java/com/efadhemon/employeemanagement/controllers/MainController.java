@@ -23,7 +23,7 @@ public class MainController {
     public void manageEmployees(ActionEvent event) throws Exception {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("employee.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 586, 586);
+        Scene scene = new Scene(fxmlLoader.load(), 1000, 1000);
         stage.setScene(scene);
     }
 
