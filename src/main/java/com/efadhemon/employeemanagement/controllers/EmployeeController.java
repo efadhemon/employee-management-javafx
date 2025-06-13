@@ -1,41 +1,63 @@
 package com.efadhemon.employeemanagement.controllers;
 
 
+import com.efadhemon.employeemanagement.App;
 import com.efadhemon.employeemanagement.models.Employee;
 import com.efadhemon.employeemanagement.utils.FileManager;
 import com.efadhemon.employeemanagement.utils.Functions;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.collections.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 
-import java.util.*;
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 
 public class EmployeeController {
 
-    private static final  String DB_FILE_NAME = "employees.txt";
+    private static final String DB_FILE_PATH = "src/databases/employees.txt";
+    private static final FileManager fileManager = new FileManager(DB_FILE_PATH);
 
-    @FXML private TableView<Employee> table;
-    @FXML private TableColumn<Employee, String> colId;
-    @FXML private TableColumn<Employee, String> colName;
-    @FXML private TableColumn<Employee, String> colRole;
-    @FXML private TableColumn<Employee, Void> colActions;
 
-    private final ObservableList<Employee> employeeList = FXCollections.observableArrayList();
+    private final ObservableList<Employee> data = FXCollections.observableArrayList();
+    @FXML
+    private TableView<Employee> table;
+    @FXML
+    private TableColumn<Employee, String> colId;
+    @FXML
+    private TableColumn<Employee, String> colName;
+    @FXML
+    private TableColumn<Employee, String> colRole;
+    @FXML
+    private TableColumn<Employee, Void> colActions;
+
+    public static boolean isExist(String id) {
+        try {
+            List<String> lines = fileManager.readLines();
+            boolean exists = lines.stream().anyMatch(line -> line.startsWith(id + ","));
+            return exists;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @FXML
     public void initialize() {
-        colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().id));
-        colName.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().name));
-        colRole.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().role));
-        table.setItems(employeeList);
+        colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getId()));
+        colName.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getName()));
+        colRole.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRole()));
+        table.setItems(data);
 
-        loadEmployees();
+        loadData();
 
         // Add Delete & Update Buttons to the Actions Column
         colActions.setCellFactory(param -> new TableCell<>() {
@@ -67,17 +89,14 @@ public class EmployeeController {
         });
     }
 
-
-
-    private void loadEmployees() {
+    private void loadData() {
         try {
-            List<String> lines = FileManager.readLines(DB_FILE_NAME);
-            employeeList.clear();
+            List<String> lines = fileManager.readLines();
+            data.clear();
             for (String line : lines) {
-                String[] parts = line.split(",");
-                employeeList.add(new Employee(parts[0], parts[1], parts[2]));
+                data.add(new Employee().lineToEmployee(line));
             }
-            table.setItems(employeeList);
+            table.setItems(data);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -89,17 +108,17 @@ public class EmployeeController {
         result.ifPresent(emp -> {
             try {
                 // Check if ID already exists
-                List<String> lines = FileManager.readLines("employees.txt");
-                boolean exists = lines.stream().anyMatch(line -> line.startsWith(emp.id + ","));
+                boolean exists = isExist(emp.getId());
                 if (exists) {
                     Functions.showError("Error", "Employee ID already exists!");
                     return;
                 }
 
+                List<String> lines = fileManager.readLines();
                 // Append new employee
-                lines.add(emp.id + "," + emp.name + "," + emp.role);
-                FileManager.writeLines("employees.txt", lines);
-                loadEmployees();
+                lines.add(emp.toDBLine());
+                fileManager.writeLines(lines);
+                loadData();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -108,10 +127,10 @@ public class EmployeeController {
 
     public void deleteEmployee(Employee emp) {
         try {
-            List<String> lines = FileManager.readLines(DB_FILE_NAME);
-            lines.removeIf(line -> line.startsWith(emp.id + ","));
-            FileManager.writeLines(DB_FILE_NAME, lines);
-            loadEmployees();
+            List<String> lines = fileManager.readLines();
+            lines.removeIf(line -> line.startsWith(emp.getId() + ","));
+            fileManager.writeLines(lines);
+            loadData();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -121,14 +140,14 @@ public class EmployeeController {
         Optional<Employee> result = showEmployeeDialog(emp); // pass existing employee to update
         result.ifPresent(updatedEmp -> {
             try {
-                List<String> lines = FileManager.readLines("employees.txt");
+                List<String> lines = fileManager.readLines();
                 for (int i = 0; i < lines.size(); i++) {
-                    if (lines.get(i).startsWith(emp.id + ",")) {
-                        lines.set(i, updatedEmp.id + "," + updatedEmp.name + "," + updatedEmp.role);
+                    if (lines.get(i).startsWith(emp.getId() + ",")) {
+                        lines.set(i, updatedEmp.toDBLine());
                     }
                 }
-                FileManager.writeLines("employees.txt", lines);
-                loadEmployees();
+                fileManager.writeLines(lines);
+                loadData();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -138,7 +157,7 @@ public class EmployeeController {
     private Optional<Employee> showEmployeeDialog(Employee emp) {
         Dialog<Employee> dialog = new Dialog<>();
         dialog.setTitle(emp == null ? "Add New Employee" : "Update Employee");
-        dialog.setHeaderText(emp == null ? "Add a new employee" : "Update details for Employee ID: " + emp.id);
+        dialog.setHeaderText(emp == null ? "Add a new employee" : "Update details for Employee ID: " + emp.getId());
 
         ButtonType confirmButtonType = new ButtonType(emp == null ? "Add" : "Update", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(confirmButtonType, ButtonType.CANCEL);
@@ -153,10 +172,10 @@ public class EmployeeController {
         TextField txtRole = new TextField();
 
         if (emp != null) {
-            txtId.setText(emp.id);
+            txtId.setText(emp.getId());
             txtId.setDisable(true); // Usually ID is not editable during update
-            txtName.setText(emp.name);
-            txtRole.setText(emp.role);
+            txtName.setText(emp.getName());
+            txtRole.setText(emp.getRole());
         }
 
         grid.add(new Label("ID:"), 0, 0);
@@ -186,4 +205,16 @@ public class EmployeeController {
         return dialog.showAndWait();
     }
 
+    @FXML
+    private void goBack() {
+        try {
+            Stage stage = (Stage) table.getScene().getWindow();
+            FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("main.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), 586, 586);
+            stage.setTitle("Main Menu");
+            stage.setScene(scene);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

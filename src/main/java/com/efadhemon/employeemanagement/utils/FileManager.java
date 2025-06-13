@@ -6,37 +6,38 @@ import java.util.List;
 
 public class FileManager {
 
-    private static final String FILES_ROOT_PAT = "src/databases/";
+    private final File file;
 
-    public static List<String> readLines(String filename) throws IOException {
+    public FileManager(String filePath) {
+        file = new File(filePath);
+    }
+
+    public List<String> readLines() throws IOException {
         List<String> lines = new ArrayList<>();
-        File file = new File(FILES_ROOT_PAT + filename);
+        BufferedReader br = new BufferedReader(new FileReader(file));
         if (file.exists()) {
-            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    lines.add(line);
-                }
+            String line;
+            while ((line = br.readLine()) != null) {
+                lines.add(line);
             }
         }
+        br.close();
         return lines;
     }
 
-    public static void writeLines(String filename, List<String> lines) throws IOException {
-        File file = new File(FILES_ROOT_PAT + filename);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
-            for (String line : lines) {
-                bw.write(line);
-                bw.newLine();
-            }
-        }
-    }
-
-    public static void appendLine(String filename, String line) throws IOException {
-        File file = new File(FILES_ROOT_PAT + filename);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file, true))) {
+    public void writeLines(List<String> lines) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+        for (String line : lines) {
             bw.write(line);
             bw.newLine();
         }
+        bw.close();
+    }
+
+    public void appendLine(String line) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(file, true));
+        bw.write(line);
+        bw.newLine();
+        bw.close();
     }
 }
