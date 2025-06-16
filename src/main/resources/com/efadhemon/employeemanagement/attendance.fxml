@@ -27,11 +27,13 @@
         <ComboBox fx:id="employeeId" promptText="Select Employee ID" prefWidth="200"/>
         <Button text="Check In" onAction="#handleCheckIn"/>
         <Button text="Check Out" onAction="#handleCheckOut"/>
+        <Button text="Search" onAction="#handleSearch"/>
     </HBox>
 
     <TableView fx:id="table">
         <columns>
             <TableColumn fx:id="colId" text="Employee ID"/>
+            <TableColumn fx:id="colName" text="Employee Name"/>
             <TableColumn fx:id="colDate" text="Date"/>
             <TableColumn fx:id="colCheckIn" text="Check-In"/>
             <TableColumn fx:id="colCheckOut" text="Check-Out"/>

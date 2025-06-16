@@ -1,18 +1,52 @@
 package com.efadhemon.employeemanagement.models;
 
 public class Attendance {
-    public String employeeId;
-    public String date;
-    public String checkIn;
-    public String checkOut;
+    private String employeeId;
+    private String date;
+    private String checkIn;
+    private String checkOut;
 
-    public Attendance() {
+    public Attendance(){
+
     }
 
     public Attendance(String employeeId, String date, String checkIn, String checkOut) {
         this.employeeId = employeeId;
         this.date = date;
         this.checkIn = checkIn;
+        this.checkOut = checkOut;
+    }
+
+
+    public String getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getCheckIn() {
+        return checkIn;
+    }
+
+    public void setCheckIn(String checkIn) {
+        this.checkIn = checkIn;
+    }
+
+    public String getCheckOut() {
+        return checkOut;
+    }
+
+    public void setCheckOut(String checkOut) {
         this.checkOut = checkOut;
     }
 

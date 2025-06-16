@@ -2,6 +2,7 @@ package com.efadhemon.employeemanagement.controllers;
 
 import com.efadhemon.employeemanagement.App;
 import com.efadhemon.employeemanagement.models.Attendance;
+import com.efadhemon.employeemanagement.models.Employee;
 import com.efadhemon.employeemanagement.utils.FileManager;
 import com.efadhemon.employeemanagement.utils.Functions;
 import javafx.beans.property.SimpleStringProperty;
@@ -13,6 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -28,13 +30,17 @@ public class AttendanceController {
     private final ObservableList<Attendance> data = FXCollections.observableArrayList();
 
     @FXML
+    private TextField searchFiled;
+
+    @FXML
     private TableView<Attendance> table;
 
     @FXML
     private ComboBox<String> employeeId;
-
     @FXML
     private TableColumn<Attendance, String> colId;
+    @FXML
+    public TableColumn<Attendance, String> colName;
     @FXML
     private TableColumn<Attendance, String> colDate;
     @FXML
@@ -45,10 +51,18 @@ public class AttendanceController {
     @FXML
     public void initialize() {
 
-        colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().employeeId));
-        colDate.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().date));
-        colCheckIn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().checkIn));
-        colCheckOut.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().checkOut));
+        colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEmployeeId()));
+        colName.setCellValueFactory(data -> {
+           Employee emp =  EmployeeController.getEmployee(data.getValue().getEmployeeId());
+           if(emp!=null){
+           return new SimpleStringProperty(emp.getName());
+           }else {
+               return new SimpleStringProperty("NA");
+           }
+        });
+        colDate.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDate()));
+        colCheckIn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCheckIn()));
+        colCheckOut.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCheckOut()));
 
         table.setItems(data);
 
@@ -59,11 +73,13 @@ public class AttendanceController {
 
     @FXML
     public void handleCheckIn() {
-        String empId = employeeId.getValue();
-        if (empId == null || empId.trim().isEmpty()) {
+        String employee = employeeId.getValue();
+        if (employee == null || employee.trim().isEmpty()) {
             Functions.showError("Error", "Please select an Employee ID.");
             return;
         }
+
+        String empId = employee.split("-")[0];
 
         boolean isEmployeeExists = EmployeeController.isExist(empId);
         if (!isEmployeeExists) {
@@ -98,11 +114,13 @@ public class AttendanceController {
 
     @FXML
     public void handleCheckOut() {
-        String empId = employeeId.getValue();
-        if (empId == null || empId.trim().isEmpty()) {
+        String employee = employeeId.getValue();
+        if (employee == null || employee.trim().isEmpty()) {
             Functions.showError("Error", "Please select an Employee ID.");
             return;
         }
+
+        String empId = employee.split("-")[0];
 
         boolean isEmployeeExists = EmployeeController.isExist(empId);
         if (!isEmployeeExists) {
@@ -154,7 +172,7 @@ public class AttendanceController {
             for (String line : lines) {
                 String[] parts = line.split(",");
                 if (parts.length > 0) {
-                    employeeId.getItems().add(parts[0]); // Employee ID
+                    employeeId.getItems().add(parts[0]+'-'+parts[1]); // Employee ID
                 }
             }
         } catch (IOException e) {
@@ -175,6 +193,22 @@ public class AttendanceController {
             e.printStackTrace();
         }
     }
+
+    @FXML
+    public void handleSearch() {
+        String employee = employeeId.getValue();
+
+        if (employee != null && !employee.trim().isEmpty()) {
+            String empId = employee.split("-")[0];
+            ObservableList<Attendance> filteredData = data.filtered(item -> item.getEmployeeId().equals(empId));
+            table.setItems(filteredData);
+        } else {
+            table.setItems(data);
+            table.refresh();
+        }
+        employeeId.setValue(null);
+    }
+
 
     @FXML
     private void goBack() {

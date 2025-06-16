@@ -54,6 +54,20 @@ public class EmployeeController {
         }
     }
 
+    public static Employee getEmployee(String id) {
+        try {
+            List<String> lines = fileManager.readLines();
+            for (String line : lines) {
+                if (line.startsWith(id + ",")) {
+                    return new Employee().lineToEmployee(line);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return null; // Not found
+    }
+
     @FXML
     public void initialize() {
         colId.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getId()));
