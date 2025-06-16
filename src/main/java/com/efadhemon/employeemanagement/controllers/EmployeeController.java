@@ -29,6 +29,10 @@ public class EmployeeController {
 
 
     private final ObservableList<Employee> data = FXCollections.observableArrayList();
+
+    @FXML
+    private TextField searchFiled;
+
     @FXML
     private TableView<Employee> table;
     @FXML
@@ -141,6 +145,15 @@ public class EmployeeController {
         result.ifPresent(updatedEmp -> {
             try {
                 List<String> lines = fileManager.readLines();
+
+                if (!emp.getId().equals(updatedEmp.getId())) {
+                    boolean exists = isExist(updatedEmp.getId());
+                    if (exists) {
+                        Functions.showError("Error", "Member ID already exists!");
+                        return;
+                    }
+                }
+
                 for (int i = 0; i < lines.size(); i++) {
                     if (lines.get(i).startsWith(emp.getId() + ",")) {
                         lines.set(i, updatedEmp.toDBLine());
@@ -173,7 +186,7 @@ public class EmployeeController {
 
         if (emp != null) {
             txtId.setText(emp.getId());
-            txtId.setDisable(true); // Usually ID is not editable during update
+//            txtId.setDisable(true); // Usually ID is not editable during update
             txtName.setText(emp.getName());
             txtRole.setText(emp.getRole());
         }
@@ -203,6 +216,20 @@ public class EmployeeController {
         });
 
         return dialog.showAndWait();
+    }
+
+    @FXML
+    public void handleSearch() {
+        String searchTerm = searchFiled.getText().trim();
+        System.out.println("searchTerm: " + searchTerm);
+
+        if (!searchTerm.isEmpty()) {
+            ObservableList<Employee> filteredData = data.filtered(item -> item.getId().equals(searchTerm) || item.getName().toLowerCase().contains(searchTerm.toLowerCase()));
+            table.setItems(filteredData);
+        } else {
+            table.setItems(data);
+            table.refresh();
+        }
     }
 
     @FXML
